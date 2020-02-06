@@ -43,7 +43,7 @@ while (my $rowref = $toltable->getrow_hashref()) {
     next unless ($rowref->{Street});
     next if ($rowref->{NSA} eq 'y' || $rowref->{NSA} eq 'Y');
     next unless ($rowref->{$TolRace} && $rowref->{$TolRace} eq 'y');
-    printf STDERR "rowref: %s\n", Dumper($rowref);
+    #printf STDERR "rowref: %s\n", Dumper($rowref);
     my $occupant = $rowref->{Occupant};
     $occupant = "Occupant" unless ($occupant ne "");
 
