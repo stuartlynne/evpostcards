@@ -1,0 +1,23 @@
+#!/bin/bash
+
+
+BASENAME=$(expr ${1} : '\(.*\)-ml.pdf')
+
+A=${BASENAME}-fr.pdf
+B=${BASENAME}-rpc.pdf
+C=${1}
+
+rm -rf tmp *east
+mkdir -p tmp
+
+pdfseparate $A "tmp/$A-%03d"
+
+
+#set -x
+ARGS=$(for i in tmp/*; do echo $i; echo $B; done)
+set -x
+pdfunite $ARGS $C
+
+
+#rm -rf tmp *east
+

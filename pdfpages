@@ -1,0 +1,6 @@
+#!/bin/bash
+
+for i in ${*}; do
+echo -n "$i: "
+pdftk ${i} dump_data | sed -n -e 's/NumberOfPages: //p'
+done

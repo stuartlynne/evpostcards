@@ -1,0 +1,115 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use Data::Dumper;
+local $Data::Dumper::Sortkeys = 1;
+
+use STables::RTable;
+use STables::WTable;
+
+
+my $TolPath = $ARGV[0];
+my $TolRace = $ARGV[1];
+
+#my $TolMail = sprintf("%s.csv", $TolRace);
+my $TolMail = $TolRace;
+
+$TolRace =~ s/.csv//;
+$TolRace =~ s/.*-//;
+
+
+
+#my $Race = $ARGV[2];
+#my $Race = $TolMail;
+#$Race =~ s/-.........csv//;
+
+printf STDERR "TolPath: %s\n", $TolPath;
+printf STDERR "TolRace: %s\n", $TolRace;
+printf STDERR "TolMail: %s\n", $TolMail;
+
+my %MailList = ();
+
+
+my $toldata = STables::RTable->new(name => $TolPath);
+my $toltable = $toldata->worktable(0);
+
+
+while (my $rowref = $toltable->getrow_hashref()) {
+
+    #printf STDERR "[%d]\n", $toltable->currow();
+    next unless ($rowref->{House});
+    next unless ($rowref->{Street});
+    next if ($rowref->{NSA} eq 'y' || $rowref->{NSA} eq 'Y');
+    next unless ($rowref->{$TolRace} && $rowref->{$TolRace} eq 'y');
+    printf STDERR "rowref: %s\n", Dumper($rowref);
+    my $occupant = $rowref->{Occupant};
+    $occupant = "Occupant" unless ($occupant ne "");
+
+
+    my $address = sprintf("%s %s|%s", $rowref->{House}, $rowref->{Street}, $occupant);
+
+    if ($MailList{$address}) {
+        printf STDERR "Duplicate: %s\n", $address;
+    }
+    my $postalcode = uc $rowref->{PostalCode};
+    $MailList{$address} = $postalcode."|".$rowref->{City};
+
+    #printf STDERR "%s %s\n", $address, $rowref->{PostalCode};
+}
+
+#printf STDERR "MailList: %s\n", Dumper(\%MailList);
+#exit();
+
+my @ColumnNames = (
+        'Occupant', 
+        'Address',
+        'City',
+        'Postal Code',
+        );
+
+
+my @Addresses = (); 
+
+foreach my $key (keys %MailList) {
+
+    #printf STDERR "%s\n", $key;
+
+    my $addr = sprintf("%s|%s", $MailList{$key}, $key);
+    push (@Addresses, $addr);
+}
+
+#printf STDERR "Addresses: %s\n", Dumper(\@Addresses);
+
+my $wtable = STables::WTable->new(name => $TolMail, columnnames => \@ColumnNames);
+
+foreach my $addr (sort @Addresses) {
+    #printf STDERR "%s\n", $addr;
+    my ($postalcode, $city, $address, $occupant) = split(/\|/, $addr);
+    #printf STDERR "%s %s %s\n", $city, $postalcode, $address;
+    $wtable->write_hashref({
+        'Occupant',      => uc $occupant,
+        'Address',      => uc $address,
+        'City',      => uc $city,
+        'Postal Code',      => uc $postalcode,
+        });
+}
+
+$wtable->write_hashref({
+        'Occupant',      => 'Occupant',
+        'Address',      => '35 Wilkes Creek Dr.',
+        'City',      => uc 'Port Moody, BC',
+        'Postal Code',      => 'V3H 5A1',
+        });
+
+$wtable->close();
+
+printf STDERR "Count: %d\n", $#Addresses;
+
+#printf STDERR "FCVMissing: %s\n", Dumper(\%FCVMissing);
+
+#foreach my $key (keys %FCVMissing) {
+#    printf STDOUT "%s\n", $key;
+#}
+
