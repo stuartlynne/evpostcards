@@ -43,7 +43,7 @@ ML=$(addsuffix -ml.pdf, ${RACES})
 # 5 - merge front with back
 %-ml.pdf : %-rpc.pdf %-fr.pdf
 	./mergepdf $@ 
-	#rm -rv $<
+	rm -rv $<
 
 
 all: ${ML}
